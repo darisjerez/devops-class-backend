@@ -1,0 +1,59 @@
+pipeline{
+    agent any
+    environment{
+        IMAGE_NAME = "express-ts-app"
+        PORT = "3000"
+    }
+    stages{
+        stage('Fech Code'){
+            steps{
+                git branch: 'Michael-stg', url: 'https://github.com/darisjerez/devops-class-backend'
+            }
+        }
+
+        stage('Dependencies'){
+            steps{
+                sh '''
+                npm install --legacy-peer-deps
+                '''
+            }
+        }
+
+        stage('Lint'){
+            steps{
+                sh '''
+                npm run lint
+                '''
+            }
+        }
+
+        stage('Test'){
+            steps{
+                sh '''
+                npm run test
+                '''
+            }
+        }
+
+        stage('Docker Build && Run Locally'){
+            steps{
+                sh """
+                docker build -t ${IMAGE_NAME}:${env.BUILD_NUMBER} .
+                docker run -d -p ${PORT}:3000 ${IMAGE_NAME}:${env.BUILD_NUMBER}
+                """
+            }
+        }
+    } 
+
+    post {
+        always {
+            echo 'Finished pipeline'
+        }
+        success {
+            echo 'Has been success'
+        }
+        failure{
+            echo 'Failured pipeline'
+        }
+    }   
+}
